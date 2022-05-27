@@ -17,19 +17,21 @@ contract Aquafina is SYLIUMOracle {
     uint256 public usdcGenesisPrice;
     uint256 pricePrecision = 1e3;
     uint256 varPrecision = 1e4; 
-    uint256 dollarPrecision = 10000000000; //$1.00 * 1e5
+    uint256 dollarPrecision = 1e18; //$1.00 * 1e5
     uint256 genesisDemand = 20000;
-    uint256 genesisAlpha = 1e3; // 0.1
-    uint256 step = 250; //0.25%
+    uint256 genesisAlpha; // 0.1
+    uint256 step = 1;
     uint256 alphaStarter;
     uint256 refresh = 3600;
+    uint256 beta = 10;
     /* ====================== MODIFIERS ================================= */
     /* ====================== CONSTRUCTOR =============================== */
-    constructor(uint256 _starter) {
+    constructor(uint256 _starter, uint256 _genesisAlpha) {
       starter = _starter;
+      genesisAlpha = _genesisAlpha;
       alphaStarter = block.timestamp - 3600;
-      ethGenesisPrice = uint256(getETHLatestPrice());
-      usdcGenesisPrice = uint256(getUSDCLatestPrice());
+      ethGenesisPrice = get_eth_price();
+      usdcGenesisPrice = get_usdc_price();
     }
 
         /* ====================== PUBLIC FUNCTIONS ========================== */
@@ -44,8 +46,8 @@ contract Aquafina is SYLIUMOracle {
             uint256
         )
     {
-        uint256 currentEthPrice = uint256(getETHLatestPrice()) + 700000000;
-        uint256 currentUsdcPrice = uint256(getUSDCLatestPrice()) - 50000;
+        uint256 currentEthPrice = get_eth_price() + 70 * DECIMALS; //70*1e18 i.e + $70
+        uint256 currentUsdcPrice = get_usdc_price() - 5 * 1e16; // i.e - 0.05
         return (starter, ethGenesisPrice, currentEthPrice, usdcGenesisPrice, currentUsdcPrice);
     }
 
@@ -66,16 +68,10 @@ contract Aquafina is SYLIUMOracle {
              stepEth = (ethCurrent - ethGenesis) * varPrecision;
              varEth = stepEth / ethGenesis;
          }
-         if (varEth <= 10) {
-             regEth = 10;
-         } else if (varEth> 10 && varEth <= 100) {
-             regEth = 100;
-         } else if (varEth > 100 && varEth <= 1000) {
-             regEth = 10000;
-         } else if (varEth > 1000 && varEth <= 10000) {
-             regEth = 100000;
+         if (varEth < 1000) { // Variation rate <= 10% (10: 0.1%, 100: 1%, 1000: 10%)
+             regEth = 1000;
          } else {
-             regEth = varEth; // Leat to 0 Eth in the final equation
+             regEth = varEth; // Leads to 0 Eth in the final equation; max variation supported < 10%
          }
         return (varEth, regEth);
     }
@@ -92,8 +88,8 @@ contract Aquafina is SYLIUMOracle {
         } else if (block.timestamp > starter + 24 * 60 * 60) {
             starter = block.timestamp;
             _timer = starter;
-            ethGenesisPrice = uint256(getETHLatestPrice());
-            usdcGenesisPrice = uint256(getUSDCLatestPrice());
+            ethGenesisPrice = get_eth_price();
+            usdcGenesisPrice = get_usdc_price();
         }
         emit TimerUpdatetd(_timer);
     }
@@ -114,6 +110,9 @@ contract Aquafina is SYLIUMOracle {
         return (ethRatio, usdcRatio);
     }
 
+     function getGenesisAlpha() public view returns (uint256) {
+        return genesisAlpha;
+    }
 
     /* ====================== RESTRICTED FUNCTIONS ====================== */
     // Function to set the equalizers
@@ -123,14 +122,14 @@ contract Aquafina is SYLIUMOracle {
         uint256 alpha = getGenesisAlpha();
         // USDC, ETH and SYLIX in init dollar 
         uint256 xEth = 1; 
-        uint256 xUsdc = uint256(getETHLatestPrice()/getUSDCLatestPrice());
-        uint256 xSylix = uint256(getETHLatestPrice()) / get_sylix_price();
+        uint256 xUsdc = get_eth_price() /get_usdc_price();
+        uint256 xSylix = get_eth_price() / get_sylix_price();
         // Getting regEth and varEth
         (uint256 varEth, uint256 regEth) = getVariation();
         // Getting ETH and USDC reserves ratio
         (uint256 ethRatio, uint256 usdcRatio) = getReservesRatio();
 
-        equa = dollarPrecision / ((regEth - varEth) *ethRatio * xEth + usdcRatio * xUsdc + alpha * xSylix);
+        equa = dollarPrecision / ((regEth - varEth) *ethRatio * xEth + 10 * (usdcRatio * xUsdc + alpha * xSylix));
         return (equa, xEth, xUsdc, xSylix);
     }
 
@@ -153,25 +152,6 @@ contract Aquafina is SYLIUMOracle {
         }
     }
 
-    function getGenesisAlpha() public view returns (uint256) {
-        return genesisAlpha;
-    }
-
-    // Function to set the SYLIUM design and getting ETH and USDC portions 
-    function setDesign() public view returns (uint256, uint256, uint256) {
-        (uint256 equa, uint256 xEth, uint256 xUsdc, ) = setEqualizer();
-        (uint256 varEth, uint256 regEth) = getVariation();
-        (uint256 ethRatio, uint256 usdcRatio) = getReservesRatio();
-        // ETH Portion
-        uint256 partEth = equa * (regEth - varEth) * ethRatio * xEth;
-        // USDC Portion
-        uint256 partUsdc = equa * usdcRatio * xUsdc; 
-
-        uint256 result = partEth + partUsdc;
-
-        return (partEth, partUsdc, result);
-    }
-
     function setAlgorithmicDesign() public view returns (uint256, uint256, uint256) {
         // initialization for the alpha
         uint256 alpha = getGenesisAlpha();
@@ -183,11 +163,11 @@ contract Aquafina is SYLIUMOracle {
         (uint256 ethRatio, uint256 usdcRatio) = getReservesRatio();
 
         //SYLIX Part
-        uint256 sylixPart = equa * alpha * xSylix;
+        uint256 sylixPart = equa * beta * alpha * xSylix;
         // ETH Part
         uint256 ethPart = equa * (regEth - varEth) * ethRatio * xEth;
         // USDC Part
-        uint256 usdcPart = equa * usdcRatio * xUsdc;
+        uint256 usdcPart = equa * beta * usdcRatio * xUsdc;
         // Getting the total
         //uint256 total = sylixPart + usdcPart + ethPart;
 
