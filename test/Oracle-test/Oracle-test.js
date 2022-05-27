@@ -21,6 +21,8 @@ describe("ETHUSDPrice & USDCUSDPrice", function () {
     console.log("========== ETH PRICE ==========");
     let price = await ETHPricer.getETHLatestPrice();
     console.log(price);
+    let updatedPrice = ethers.utils.formatEther(price);
+    console.log(updatedPrice);
     console.log("========== ETH DECIMALS ==========");
     let decimals = await ETHPricer.getETHDecimals();
     console.log(decimals);
