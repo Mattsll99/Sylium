@@ -100,15 +100,3 @@ describe("SYLIUMPool", function () {
   });
 });
 
-// https://stackoverflow.com/questions/71190549/owner-account-start-with-a-non-zero-dai-balance-in-hardhat-test-suite
-// https://stackoverflow.com/questions/71190549/owner-account-start-with-a-non-zero-dai-balance-in-hardhat-test-suite
-// https://medium.com/coinmonks/yield-farming-tutorial-part-2-ea5b5254805d
-// https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
-// https://www.quicknode.com/guides/web3-sdks/how-to-connect-to-ethereum-network-with-ethers-js
-// https://www.quicknode.com/guides/web3-sdks/how-to-connect-to-ethereum-network-with-ethers-js
-// https://stackoverflow.com/questions/67177659/testing-error-for-function-call-to-a-non-contract-account
-// https://docs.ethers.io/v5/api/utils/bignumber/
-// https://ethereum.stackexchange.com/questions/95023/hardhat-how-to-interact-with-a-deployed-contract
-// https://docs.openzeppelin.com/learn/deploying-and-interacting#interacting-from-the-console
-// https://ethereum.org/en/developers/tutorials/understand-the-erc-20-token-smart-contract/
-// https://ethereum.stackexchange.com/questions/95023/hardhat-how-to-interact-with-a-deployed-contract
