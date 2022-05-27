@@ -6,8 +6,11 @@ import "hardhat/console.sol";
 import "../Oracle/ETHUSDPrice.sol";
 import "../Oracle/USDCUSDPrice.sol";
 
+
+
 contract SYLIUMOracle is ETHUSDPrice, USDCUSDPrice {
   /* ====================== STATE VARIABLES =========================== */
+  uint256 DECIMALS = 1e18;
 
   /* ====================== MODIFIERS ================================= */
   /* ====================== CONSTRUCTOR =============================== */
@@ -15,16 +18,18 @@ contract SYLIUMOracle is ETHUSDPrice, USDCUSDPrice {
   /* ====================== VIEWS ===================================== */
   // Access the ETH price with the right decimals
   function get_eth_price() public view returns (uint256) {
-    return uint256(getETHLatestPrice());
+    uint256 price = (uint256(getETHLatestPrice()) * DECIMALS) / 10**uint256(getETHDecimals());
+    return price;
   }
 
   // Access the USDC price with the right decimals
   function get_usdc_price() public view returns (uint256) {
-    return uint256(getUSDCLatestPrice()); 
+    uint256 price = (uint256(getUSDCLatestPrice()) * DECIMALS) / 10**uint256(getUSDCDecimals());
+    return price; 
   }
 
-  function get_sylix_price() public pure returns (uint256) {
-    uint256 sylix_price = 10000000000; // 100 euros //275976652819
+  function get_sylix_price() public view returns (uint256) {
+    uint256 sylix_price = (1000 * DECIMALS) / 10**2; // 100 euros //275976652819
     return sylix_price;
   }
   
@@ -42,11 +47,15 @@ contract SYLIUMOracle is ETHUSDPrice, USDCUSDPrice {
     return reserve; 
   }
 
-  function get_sylix_reserve() public pure returns (uint256) {
+  function get_sylix_reserve() public view returns (uint256) {
     uint256 amount_sylix = 100000; 
     uint256 reserve = amount_sylix * get_sylix_price();
     return reserve;
   }
+
+  /*function get_total_minted() public view returns (uint256) {
+    return totalMinted();
+  }*/
 
 
  
