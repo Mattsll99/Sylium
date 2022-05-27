@@ -4,10 +4,11 @@ const { ethers } = require("hardhat");
 describe("Aquafina", function () {
   let aquafina;
   let starter = 1650344633;
+  let genesisAlpha = 10;
 
   beforeEach(async () => {
     const Aquafina = await ethers.getContractFactory("Aquafina");
-    aquafina = await Aquafina.deploy(starter);
+    aquafina = await Aquafina.deploy(starter, genesisAlpha);
     await aquafina.deployed();
   });
 
@@ -72,19 +73,13 @@ describe("Aquafina", function () {
     console.log(equa, xeth, xusdc, xsylix);
 
     console.log(
-      "========== 100% COLLATERAL DESGIN : GETTING ETH AND USDC PARTS IN THE DESIGN + TOTAL FOR PRECISION =========="
-    );
-    let partEth,
-      partUsdc,
-      result = await aquafina.setDesign();
-    console.log(partEth, partUsdc, result);
-
-    console.log(
       "========== ALGORITHMIC DESIGN : GETTING ETH, USDC & SYLIX PARTS ========== "
     );
-    let eth,
-      usdc,
-      sylix = await aquafina.setAlgorithmicDesign();
-    console.log(eth, usdc, sylix);
+
+    let pEth,
+      pUsdc,
+      pSylix = await aquafina.setAlgorithmicDesign();
+
+    console.log(pEth, pUsdc, pSylix);
   });
 });
