@@ -1,1 +1,1 @@
-SYLIUM is a stablecoin whose backing is set dynamically by a stabilisation equation
+Repository for the Sylium protocol 
